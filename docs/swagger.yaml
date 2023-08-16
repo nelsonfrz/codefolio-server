@@ -1,0 +1,414 @@
+basePath: /
+definitions:
+  app.DeleteProject:
+    properties:
+      id:
+        type: integer
+    type: object
+  app.Login:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  app.Project:
+    properties:
+      content:
+        type: string
+      deployment_url:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      source_code_url:
+        type: string
+      thumbnail_url:
+        type: string
+      visibility:
+        type: string
+    required:
+    - name
+    type: object
+  database.Project:
+    properties:
+      content:
+        $ref: '#/definitions/sql.NullString'
+      created_at:
+        $ref: '#/definitions/sql.NullTime'
+      deployment_url:
+        $ref: '#/definitions/sql.NullString'
+      description:
+        $ref: '#/definitions/sql.NullString'
+      id:
+        type: integer
+      name:
+        type: string
+      source_code_url:
+        $ref: '#/definitions/sql.NullString'
+      thumbnail_url:
+        $ref: '#/definitions/sql.NullString'
+      user_id:
+        $ref: '#/definitions/sql.NullInt32'
+      visibility:
+        $ref: '#/definitions/database.Visibility'
+    type: object
+  database.User:
+    properties:
+      bio:
+        $ref: '#/definitions/sql.NullString'
+      created_at:
+        $ref: '#/definitions/sql.NullTime'
+      full_name:
+        $ref: '#/definitions/sql.NullString'
+      github_url:
+        $ref: '#/definitions/sql.NullString'
+      id:
+        type: integer
+      location:
+        $ref: '#/definitions/sql.NullString'
+      password:
+        type: string
+      personal_website_url:
+        $ref: '#/definitions/sql.NullString'
+      profile_picture_url:
+        $ref: '#/definitions/sql.NullString'
+      username:
+        type: string
+    type: object
+  database.Visibility:
+    enum:
+    - private
+    - public
+    type: string
+    x-enum-varnames:
+    - VisibilityPrivate
+    - VisibilityPublic
+  sql.NullInt32:
+    properties:
+      int32:
+        type: integer
+      valid:
+        description: Valid is true if Int32 is not NULL
+        type: boolean
+    type: object
+  sql.NullString:
+    properties:
+      string:
+        type: string
+      valid:
+        description: Valid is true if String is not NULL
+        type: boolean
+    type: object
+  sql.NullTime:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Codefolio backend server written in Go.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Echo Swagger Example API
+  version: "1.0"
+paths:
+  /:
+    get:
+      consumes:
+      - '*/*'
+      description: get the status of server.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Show the status of server.
+      tags:
+      - root
+  /authorized/projects:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a project by ID associated with the authenticated user
+      parameters:
+      - description: Project ID to be deleted
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/app.DeleteProject'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted project with message
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a project
+      tags:
+      - projects
+    get:
+      description: Retrieve all authorized projects with optional pagination
+      parameters:
+      - description: Limit the number of returned projects (default is 25)
+        in: query
+        name: limit
+        type: integer
+      - description: Starting point for project retrieval (default is 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved authorized projects
+          schema:
+            items:
+              $ref: '#/definitions/database.Project'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Retrieve all projects (authorized)
+      tags:
+      - projects
+    post:
+      consumes:
+      - application/json
+      description: Create a new project associated with the authenticated user
+      parameters:
+      - description: Project body to be added
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/app.Project'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created project
+          schema:
+            $ref: '#/definitions/database.Project'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new project
+      tags:
+      - projects
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and provide JWT token
+      parameters:
+      - description: User login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/app.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully authenticated user with JWT token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - authentication
+  /projects:
+    get:
+      description: Retrieve all projects with optional pagination
+      parameters:
+      - description: Limit the number of returned projects (default is 25)
+        in: query
+        name: limit
+        type: integer
+      - description: Starting point for project retrieval (default is 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved projects
+          schema:
+            items:
+              $ref: '#/definitions/database.Project'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Retrieve all projects
+      tags:
+      - projects
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the provided username and password
+      parameters:
+      - description: User registration credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/app.Login'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully registered user details
+          schema:
+            $ref: '#/definitions/database.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict - User with the given username already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - authentication
+  /users:
+    get:
+      description: Retrieve all users with optional pagination
+      parameters:
+      - description: Limit the number of returned users (default is 25)
+        in: query
+        name: limit
+        type: integer
+      - description: Starting point for user retrieval (default is 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved users
+          schema:
+            items:
+              $ref: '#/definitions/database.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Retrieve all users
+      tags:
+      - users
+schemes:
+- http
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

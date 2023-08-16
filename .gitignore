@@ -1,0 +1,42 @@
+# Compiled Object files
+*.o
+*.a
+
+# Compiled Binary artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*main
+
+# Directories
+.tmp/
+
+# Logs
+*.log
+
+# Dependencies
+/vendor/
+
+# Configuration files
+.env
+*.toml
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# Go specific
+bin/
+go.sum
+!go.mod
+
+# Misc
+tmp/
+
+# sqlc generated files
+*.sql.go
