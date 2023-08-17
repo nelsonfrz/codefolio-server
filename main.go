@@ -82,6 +82,7 @@ func main() {
 	auth.Use(echojwt.WithConfig(jwtConfig))
 	auth.GET("/projects", a.GetAllProjectsAuthorized)
 	auth.POST("/projects", a.CreateProject)
+	auth.PUT("/projects", a.UpdateProject)
 	auth.DELETE("/projects", a.DeleteProject)
 
 	e.Logger.Fatal(e.Start(":3000"))

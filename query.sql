@@ -77,7 +77,7 @@ LIMIT $1 OFFSET $2;
 SELECT *
 FROM projects
 WHERE id = $1;
--- name: UpdateProct :one
+-- name: UpdateProject :one
 UPDATE projects
 SET user_id = $2,
   name = $3,

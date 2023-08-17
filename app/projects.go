@@ -212,3 +212,66 @@ func (a *App) DeleteProject(c echo.Context) error {
 
 	return c.String(http.StatusOK, "deleted project with id "+strconv.FormatInt(u.ID, 10))
 }
+
+type UpdatedProject struct {
+	ID            int32  `json:"id" validate:"required"`
+	Name          string `json:"name"`
+	ThumbnailUrl  string `json:"thumbnail_url"`
+	Description   string `json:"description"`
+	Content       string `json:"content"`
+	Visibility    string `json:"visibility"`
+	SourceCodeUrl string `json:"source_code_url"`
+	DeploymentUrl string `json:"deployment_url"`
+}
+
+func (a *App) UpdateProject(c echo.Context) error {
+	input := new(UpdatedProject)
+	if err := c.Bind(input); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if err := c.Validate(input); err != nil {
+		return err
+	}
+
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*JwtCustomClaims)
+
+	visibility := database.VisibilityPublic
+	if input.Visibility != "public" {
+		visibility = database.VisibilityPrivate
+	}
+
+	project, err := a.queries.SelectProject(a.ctx, input.ID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	if project.UserID.Int32 != claims.UserId {
+		return echo.NewHTTPError(http.StatusUnauthorized)
+	}
+
+	project.Name = input.Name
+	project.Content = sql.NullString{String: input.Content, Valid: input.Content != ""}
+	project.Description = sql.NullString{String: input.Description, Valid: input.Description != ""}
+	project.DeploymentUrl = sql.NullString{String: input.DeploymentUrl, Valid: input.DeploymentUrl != ""}
+	project.SourceCodeUrl = sql.NullString{String: input.SourceCodeUrl, Valid: input.SourceCodeUrl != ""}
+	project.ThumbnailUrl = sql.NullString{String: input.ThumbnailUrl, Valid: input.ThumbnailUrl != ""}
+	project.Visibility = visibility
+
+	project, err = a.queries.UpdateProject(a.ctx, database.UpdateProjectParams{
+		ID:            input.ID,
+		Name:          input.Name,
+		UserID:        sql.NullInt32{Int32: claims.UserId, Valid: true},
+		ThumbnailUrl:  project.ThumbnailUrl,
+		Description:   project.Description,
+		Content:       project.Content,
+		Visibility:    project.Visibility,
+		SourceCodeUrl: project.SourceCodeUrl,
+		DeploymentUrl: project.DeploymentUrl,
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusCreated, project)
+}
